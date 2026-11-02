@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <AssemblyName>CrosshairOverlay</AssemblyName>
+    <RootNamespace>CrosshairOverlay</RootNamespace>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <Version>1.0.0</Version>
+    <Authors>CrosshairOverlay</Authors>
+    <Description>Customizable always-on-top crosshair overlay for Windows.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Keep WPF controls unambiguous; WinForms types are imported explicitly in TrayIconService. -->
+    <Using Remove="System.Windows.Forms" />
+    <Using Remove="System.Drawing" />
+  </ItemGroup>
+
+</Project>

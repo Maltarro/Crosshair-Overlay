@@ -1,0 +1,907 @@
+<Window x:Class="CrosshairOverlay.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:CrosshairOverlay.Controls"
+        xmlns:conv="clr-namespace:CrosshairOverlay.Converters"
+        xmlns:behaviors="clr-namespace:CrosshairOverlay.Behaviors"
+        Title="Crosshair Overlay"
+        Width="1000"
+        Height="700"
+        MinWidth="940"
+        MinHeight="620"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ResizeMode="NoResize"
+        WindowStartupLocation="Manual"
+        ShowInTaskbar="True"
+        FontFamily="Segoe UI"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
+        TextOptions.TextFormattingMode="Display">
+
+    <Window.Resources>
+        <!-- Card with an animated neon hover glow -->
+        <Style x:Key="Card" TargetType="ContentControl">
+            <Setter Property="Margin" Value="0,0,0,12" />
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ContentControl">
+                        <Border x:Name="CardBorder"
+                                Background="{StaticResource CardGradientBrush}"
+                                BorderThickness="1"
+                                CornerRadius="14"
+                                Padding="15">
+                            <Border.BorderBrush>
+                                <SolidColorBrush Color="#3D2759" />
+                            </Border.BorderBrush>
+                            <Border.Effect>
+                                <DropShadowEffect x:Name="CardGlow"
+                                                  Color="#B45CFF"
+                                                  BlurRadius="18"
+                                                  ShadowDepth="0"
+                                                  Opacity="0"
+                                                  RenderingBias="Performance" />
+                            </Border.Effect>
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="CardGlow"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="0.32" Duration="0:0:0.28">
+                                                <DoubleAnimation.EasingFunction>
+                                                    <CubicEase EasingMode="EaseOut" />
+                                                </DoubleAnimation.EasingFunction>
+                                            </DoubleAnimation>
+                                            <DoubleAnimation Storyboard.TargetName="CardGlow"
+                                                             Storyboard.TargetProperty="BlurRadius"
+                                                             To="28" Duration="0:0:0.28" />
+                                            <ColorAnimation Storyboard.TargetName="CardBorder"
+                                                            Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)"
+                                                            To="#7A4CA8" Duration="0:0:0.28" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                                <Trigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetName="CardGlow"
+                                                             Storyboard.TargetProperty="Opacity"
+                                                             To="0" Duration="0:0:0.3" />
+                                            <DoubleAnimation Storyboard.TargetName="CardGlow"
+                                                             Storyboard.TargetProperty="BlurRadius"
+                                                             To="18" Duration="0:0:0.3" />
+                                            <ColorAnimation Storyboard.TargetName="CardBorder"
+                                                            Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)"
+                                                            To="#3D2759" Duration="0:0:0.3" />
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </Trigger.ExitActions>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="RowLabel" TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="{StaticResource MutedBrush}" />
+        </Style>
+
+        <Style x:Key="CaptionButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Width" Value="34" />
+            <Setter Property="Height" Value="30" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="6,0,0,0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{StaticResource MutedBrush}" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+
+        <Style x:Key="MiniLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Foreground" Value="{StaticResource MutedBrush}" />
+            <Setter Property="Margin" Value="0,0,0,5" />
+        </Style>
+
+        <DrawingBrush x:Key="CheckerBrush" TileMode="Tile"
+                      Viewport="0,0,16,16" ViewportUnits="Absolute">
+            <DrawingBrush.Drawing>
+                <DrawingGroup>
+                    <GeometryDrawing Brush="#0F0919" Geometry="M0,0 H16 V16 H0 Z" />
+                    <GeometryDrawing Brush="#1A1028" Geometry="M0,0 H8 V8 H0 Z M8,8 H16 V16 H8 Z" />
+                </DrawingGroup>
+            </DrawingBrush.Drawing>
+        </DrawingBrush>
+
+        <LinearGradientBrush x:Key="TitleGradient" StartPoint="0,0" EndPoint="1,0">
+            <GradientStop Color="#F5EEFF" Offset="0" />
+            <GradientStop Color="#DB9BFF" Offset="0.55" />
+            <GradientStop Color="#C56CFF" Offset="1" />
+        </LinearGradientBrush>
+
+        <Style x:Key="CardTitle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect Color="#B45CFF"
+                                      BlurRadius="10"
+                                      ShadowDepth="0"
+                                      Opacity="0.55"
+                                      RenderingBias="Performance" />
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid x:Name="WindowRoot" RenderTransformOrigin="0.5,0.5">
+        <Grid.RenderTransform>
+            <ScaleTransform x:Name="RootScale" ScaleX="1" ScaleY="1" />
+        </Grid.RenderTransform>
+
+        <!-- Breathing outer neon frame -->
+        <Border x:Name="OuterGlow"
+                Margin="6"
+                CornerRadius="18"
+                BorderThickness="1.5"
+                BorderBrush="{StaticResource NeonBorderBrush}"
+                IsHitTestVisible="False">
+            <Border.Effect>
+                <DropShadowEffect x:Name="WindowGlow"
+                                  Color="#B45CFF"
+                                  BlurRadius="30"
+                                  ShadowDepth="0"
+                                  Opacity="0.45"
+                                  RenderingBias="Performance" />
+            </Border.Effect>
+            <Border.Triggers>
+                <EventTrigger RoutedEvent="Loaded">
+                    <BeginStoryboard>
+                        <Storyboard RepeatBehavior="Forever" AutoReverse="True">
+                            <DoubleAnimation Storyboard.TargetProperty="(UIElement.Effect).(DropShadowEffect.Opacity)"
+                                             From="0.3" To="0.7" Duration="0:0:5">
+                                <DoubleAnimation.EasingFunction>
+                                    <SineEase EasingMode="EaseInOut" />
+                                </DoubleAnimation.EasingFunction>
+                            </DoubleAnimation>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+            </Border.Triggers>
+        </Border>
+
+        <Border x:Name="RootBorder"
+                Margin="6"
+                Background="{StaticResource WindowGradientBrush}"
+                BorderBrush="{StaticResource NeonBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="18">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- Ambient aurora layers -->
+                <Border Grid.RowSpan="3" CornerRadius="17" IsHitTestVisible="False">
+                    <Border.Background>
+                        <RadialGradientBrush Center="0.86,0.02"
+                                             GradientOrigin="0.86,0.02"
+                                             RadiusX="0.85"
+                                             RadiusY="0.75">
+                            <GradientStop Color="#66B45CFF" Offset="0" />
+                            <GradientStop Color="#00B45CFF" Offset="1" />
+                        </RadialGradientBrush>
+                    </Border.Background>
+                    <Border.Triggers>
+                        <EventTrigger RoutedEvent="Loaded">
+                            <BeginStoryboard>
+                                <Storyboard RepeatBehavior="Forever" AutoReverse="True">
+                                    <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                     From="0.5" To="1" Duration="0:0:7">
+                                        <DoubleAnimation.EasingFunction>
+                                            <SineEase EasingMode="EaseInOut" />
+                                        </DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                    </Border.Triggers>
+                </Border>
+
+                <Border Grid.RowSpan="3" CornerRadius="17" IsHitTestVisible="False">
+                    <Border.Background>
+                        <RadialGradientBrush Center="0.06,0.94"
+                                             GradientOrigin="0.06,0.94"
+                                             RadiusX="0.8"
+                                             RadiusY="0.7">
+                            <GradientStop Color="#4D7A3FD0" Offset="0" />
+                            <GradientStop Color="#007A3FD0" Offset="1" />
+                        </RadialGradientBrush>
+                    </Border.Background>
+                    <Border.Triggers>
+                        <EventTrigger RoutedEvent="Loaded">
+                            <BeginStoryboard>
+                                <Storyboard RepeatBehavior="Forever" AutoReverse="True">
+                                    <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                     From="0.25" To="0.75" Duration="0:0:9">
+                                        <DoubleAnimation.EasingFunction>
+                                            <SineEase EasingMode="EaseInOut" />
+                                        </DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                    </Border.Triggers>
+                </Border>
+
+                <!-- Title bar -->
+                <Grid Grid.Row="0" Height="58" Background="Transparent"
+                      MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="18,0,0,0">
+                        <Grid Width="24" Height="24" Margin="0,0,11,0">
+                            <Path Data="M 12 1 V 7 M 12 17 V 23 M 1 12 H 7 M 17 12 H 23"
+                                  Stroke="{StaticResource AccentBrush}"
+                                  StrokeThickness="2.2"
+                                  StrokeStartLineCap="Round"
+                                  StrokeEndLineCap="Round">
+                                <Path.Effect>
+                                    <DropShadowEffect x:Name="LogoGlow"
+                                                      Color="#C56CFF"
+                                                      BlurRadius="14"
+                                                      ShadowDepth="0"
+                                                      Opacity="0.9"
+                                                      RenderingBias="Performance" />
+                                </Path.Effect>
+                                <Path.Triggers>
+                                    <EventTrigger RoutedEvent="Loaded">
+                                        <BeginStoryboard>
+                                            <Storyboard RepeatBehavior="Forever" AutoReverse="True">
+                                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.Effect).(DropShadowEffect.Opacity)"
+                                                                 From="0.45" To="1" Duration="0:0:2.2">
+                                                    <DoubleAnimation.EasingFunction>
+                                                        <SineEase EasingMode="EaseInOut" />
+                                                    </DoubleAnimation.EasingFunction>
+                                                </DoubleAnimation>
+                                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.Effect).(DropShadowEffect.BlurRadius)"
+                                                                 From="10" To="20" Duration="0:0:2.2">
+                                                    <DoubleAnimation.EasingFunction>
+                                                        <SineEase EasingMode="EaseInOut" />
+                                                    </DoubleAnimation.EasingFunction>
+                                                </DoubleAnimation>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </EventTrigger>
+                                </Path.Triggers>
+                            </Path>
+                        </Grid>
+
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="Crosshair Overlay"
+                                       FontSize="15"
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource TitleGradient}">
+                                <TextBlock.Effect>
+                                    <DropShadowEffect Color="#B45CFF"
+                                                      BlurRadius="12"
+                                                      ShadowDepth="0"
+                                                      Opacity="0.55"
+                                                      RenderingBias="Performance" />
+                                </TextBlock.Effect>
+                            </TextBlock>
+                            <TextBlock Text="Maltech"
+                                       FontSize="9"
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource MutedBrush}"
+                                       Margin="1,1,0,0" />
+                        </StackPanel>
+
+                        <Button Style="{StaticResource GhostButton}"
+                                Click="Telegram_Click"
+                                Padding="9,4"
+                                Margin="16,0,0,0"
+                                VerticalAlignment="Center"
+                                ToolTip="Канал Telegram">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="M 1 8.5 L 21 1 L 15 19 L 9.5 13.2 L 6 16.5 L 6.2 11.4 Z"
+                                      Fill="{StaticResource AccentBrush}"
+                                      Width="14"
+                                      Height="14"
+                                      Stretch="Uniform"
+                                      Margin="0,0,6,0"
+                                      VerticalAlignment="Center" />
+                                <TextBlock Text="Telegram" FontSize="11" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,14,0">
+                        <Button Style="{StaticResource CaptionButton}" Click="Reset_Click" ToolTip="Сбросить настройки">
+                            <Path Data="M17.65 6.35A7.958 7.958 0 0 0 12 4a8 8 0 1 0 7.73 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"
+                                  Fill="{StaticResource MutedBrush}"
+                                  Width="15"
+                                  Height="15"
+                                  Stretch="Uniform" />
+                        </Button>
+                        <Button Style="{StaticResource CaptionButton}" Click="Exit_Click" ToolTip="Выход">
+                            <Path Data="M13 3h-2v10h2V3zm4.83 2.17l-1.42 1.42A6.92 6.92 0 0 1 19 12a7 7 0 1 1-11.41-5.42L6.17 5.17A8.932 8.932 0 0 0 3 12a9 9 0 0 0 18 0c0-2.74-1.23-5.18-3.17-6.83z"
+                                  Fill="{StaticResource MutedBrush}"
+                                  Width="15"
+                                  Height="15"
+                                  Stretch="Uniform" />
+                        </Button>
+
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,6,0">
+                            <TextBlock Text="ПРИЦЕЛ"
+                                       FontSize="9"
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource MutedBrush}"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,8,0" />
+                            <CheckBox Style="{StaticResource ToggleSwitch}"
+                                      IsChecked="{Binding Enabled, Mode=TwoWay}"
+                                      ToolTip="Показывать прицел" />
+                        </StackPanel>
+
+                        <Button Style="{StaticResource CaptionButton}" Click="Minimize_Click">
+                            <Path Data="M 0 0 H 10" Stroke="{StaticResource MutedBrush}" StrokeThickness="1.5" />
+                        </Button>
+                        <Button Content="✕" Style="{StaticResource CaptionButton}" Click="Close_Click" />
+                    </StackPanel>
+                </Grid>
+
+                <!-- Content -->
+                <ScrollViewer Grid.Row="1"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled"
+                              Padding="16,8,16,14"
+                              Focusable="False">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="14" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="14" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Column 1: preview, visibility, behaviour -->
+                        <StackPanel Grid.Column="0">
+                            <ContentControl Style="{StaticResource Card}">
+                                <StackPanel>
+                                    <TextBlock Text="ПРЕДПРОСМОТР"
+                                               Style="{StaticResource CardTitle}"
+                                               HorizontalAlignment="Center"
+                                               Margin="0,0,0,12" />
+
+                                    <Border Width="160" Height="160"
+                                            HorizontalAlignment="Center"
+                                            Background="{StaticResource CheckerBrush}"
+                                            BorderBrush="{StaticResource NeonBorderBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="14">
+                                        <Border.Effect>
+                                            <DropShadowEffect x:Name="PreviewGlow"
+                                                              Color="#B45CFF"
+                                                              BlurRadius="20"
+                                                              ShadowDepth="0"
+                                                              Opacity="0.35"
+                                                              RenderingBias="Performance" />
+                                        </Border.Effect>
+                                        <Border.Triggers>
+                                            <EventTrigger RoutedEvent="Loaded">
+                                                <BeginStoryboard>
+                                                    <Storyboard RepeatBehavior="Forever" AutoReverse="True">
+                                                        <DoubleAnimation Storyboard.TargetProperty="(UIElement.Effect).(DropShadowEffect.Opacity)"
+                                                                         From="0.2" To="0.7" Duration="0:0:3.2">
+                                                            <DoubleAnimation.EasingFunction>
+                                                                <SineEase EasingMode="EaseInOut" />
+                                                            </DoubleAnimation.EasingFunction>
+                                                        </DoubleAnimation>
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </EventTrigger>
+                                        </Border.Triggers>
+
+                                        <Grid>
+                                            <Border CornerRadius="13" IsHitTestVisible="False">
+                                                <Border.Background>
+                                                    <RadialGradientBrush Center="0.5,0.5"
+                                                                         GradientOrigin="0.5,0.5"
+                                                                         RadiusX="0.55"
+                                                                         RadiusY="0.55">
+                                                        <GradientStop Color="#55B45CFF" Offset="0" />
+                                                        <GradientStop Color="#00B45CFF" Offset="1" />
+                                                    </RadialGradientBrush>
+                                                </Border.Background>
+                                            </Border>
+                                            <controls:CrosshairView x:Name="PreviewCrosshair" />
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- Short captions next to the fixed hotkeys -->
+                                    <StackPanel Orientation="Horizontal"
+                                                HorizontalAlignment="Center"
+                                                Margin="0,12,0,0">
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,16,0">
+                                            <Border Style="{StaticResource KeyCap}">
+                                                <TextBlock Text="{Binding ToggleHotkey}" Style="{StaticResource KeyCapText}" />
+                                            </Border>
+                                            <TextBlock Text="прицел"
+                                                       FontSize="10"
+                                                       Foreground="{StaticResource MutedBrush}"
+                                                       VerticalAlignment="Center"
+                                                       Margin="6,0,0,0" />
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Border Style="{StaticResource KeyCap}">
+                                                <TextBlock Text="{Binding SettingsHotkey}" Style="{StaticResource KeyCapText}" />
+                                            </Border>
+                                            <TextBlock Text="настройки"
+                                                       FontSize="10"
+                                                       Foreground="{StaticResource MutedBrush}"
+                                                       VerticalAlignment="Center"
+                                                       Margin="6,0,0,0" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </StackPanel>
+                            </ContentControl>
+
+                            <ContentControl Style="{StaticResource Card}">
+                                <StackPanel>
+                                    <TextBlock Text="ОСНОВНОЕ" Style="{StaticResource CardTitle}" />
+                                    <TextBlock Text="Видимость и монитор" Style="{StaticResource CardSubtitle}" />
+
+                                    <Grid>
+                                        <CheckBox Content="Показывать прицел" IsChecked="{Binding Enabled, Mode=TwoWay}" />
+                                        <Border HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                Style="{StaticResource KeyCap}" Margin="0">
+                                            <TextBlock Text="{Binding ToggleHotkey}" Style="{StaticResource KeyCapText}" />
+                                        </Border>
+                                    </Grid>
+
+                                    <TextBlock Text="Режим показа" Style="{StaticResource MiniLabel}" Margin="0,13,0,5" />
+                                    <ComboBox x:Name="VisibilityCombo"
+                                              SelectedValuePath="Value"
+                                              SelectedValue="{Binding VisibilityMode, Mode=TwoWay}" />
+
+                                    <TextBlock Text="Монитор" Style="{StaticResource MiniLabel}" Margin="0,11,0,5" />
+                                    <ComboBox x:Name="MonitorCombo"
+                                              DisplayMemberPath="DisplayName"
+                                              SelectedValuePath="DeviceName"
+                                              SelectedValue="{Binding MonitorDeviceName, Mode=TwoWay}" />
+                                </StackPanel>
+                            </ContentControl>
+
+                            <ContentControl Style="{StaticResource Card}">
+                                <StackPanel>
+                                    <TextBlock Text="ПОВЕДЕНИЕ" Style="{StaticResource CardTitle}" />
+                                    <TextBlock Text="Запуск приложения" Style="{StaticResource CardSubtitle}" />
+
+                                    <CheckBox Content="Запускать свёрнутым в трей"
+                                              IsChecked="{Binding StartHidden, Mode=TwoWay}"
+                                              Margin="0,2,0,0" />
+
+                                    <CheckBox Content="Запускать вместе с Windows"
+                                              IsChecked="{Binding StartWithWindows, Mode=TwoWay}"
+                                              Margin="0,10,0,0" />
+                                </StackPanel>
+                            </ContentControl>
+                        </StackPanel>
+
+                        <!-- Column 2: shape and colours -->
+                        <StackPanel Grid.Column="2">
+                            <ContentControl Style="{StaticResource Card}">
+                                <StackPanel>
+                                    <TextBlock Text="ФОРМА" Style="{StaticResource CardTitle}" />
+                                    <TextBlock Text="Геометрия, обводка и размер" Style="{StaticResource CardSubtitle}" />
+
+                                    <ComboBox x:Name="StyleCombo"
+                                              SelectedValuePath="Value"
+                                              SelectedValue="{Binding Style, Mode=TwoWay}" />
+
+                                    <Grid Margin="0,12,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="104" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="42" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="Толщина" Style="{StaticResource RowLabel}" />
+                                        <Slider x:Name="ThicknessSlider" Grid.Column="1"
+                                                Minimum="1" Maximum="10" TickFrequency="1" IsSnapToTickEnabled="True"
+                                                Value="{Binding Thickness, Mode=TwoWay}" />
+                                        <TextBlock Grid.Column="2" Style="{StaticResource ValueText}"
+                                                   Text="{Binding Value, ElementName=ThicknessSlider, StringFormat={}{0:0}}" />
+                                    </Grid>
+
+                                    <Grid Margin="0,3,0,0" Visibility="{Binding Style, Converter={StaticResource StyleFeature}, ConverterParameter=length}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="104" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="42" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="Длина луча" Style="{StaticResource RowLabel}" />
+                                        <Slider x:Name="LengthSlider" Grid.Column="1"
+                                                Minimum="1" Maximum="60" TickFrequency="1" IsSnapToTickEnabled="True"
+                                                Value="{Binding Length, Mode=TwoWay}" />
+                                        <TextBlock Grid.Column="2" Style="{StaticResource ValueText}"
+                                                   Text="{Binding Value, ElementName=LengthSlider, StringFormat={}{0:0}}" />
+                                    </Grid>
+
+                                    <Grid Margin="0,3,0,0" Visibility="{Binding Style, Converter={StaticResource StyleFeature}, ConverterParameter=cross}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="104" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="42" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="Зазор" Style="{StaticResource RowLabel}" />
+                                        <Slider x:Name="GapSlider" Grid.Column="1"
+                                                Minimum="0" Maximum="40" TickFrequency="1" IsSnapToTickEnabled="True"
+                                                Value="{Binding Gap, Mode=TwoWay}" />
+                                        <TextBlock Grid.Column="2" Style="{StaticResource ValueText}"
+                                                   Text="{Binding Value, ElementName=GapSlider, StringFormat={}{0:0}}" />
+                                    </Grid>
+
+                                    <Grid Margin="0,3,0,0" Visibility="{Binding Style, Converter={StaticResource StyleFeature}, ConverterParameter=dot}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="104" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="42" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="Размер точки" Style="{StaticResource RowLabel}" />
+                                        <Slider x:Name="DotSlider" Grid.Column="1"
+                                                Minimum="1" Maximum="20" TickFrequency="1" IsSnapToTickEnabled="True"
+                                                Value="{Binding DotSize, Mode=TwoWay}" />
+                                        <TextBlock Grid.Column="2" Style="{StaticResource ValueText}"
+                                                   Text="{Binding Value, ElementName=DotSlider, StringFormat={}{0:0}}" />
+                                    </Grid>
+
+                                    <Grid Margin="0,3,0,0" Visibility="{Binding Style, Converter={StaticResource StyleFeature}, ConverterParameter=circle}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="104" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="42" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="Радиус круга" Style="{StaticResource RowLabel}" />
+                                        <Slider x:Name="RadiusSlider" Grid.Column="1"
+                                                Minimum="4" Maximum="80" TickFrequency="1" IsSnapToTickEnabled="True"
+                                                Value="{Binding CircleRadius, Mode=TwoWay}" />
+                                        <TextBlock Grid.Column="2" Style="{StaticResource ValueText}"
+                                                   Text="{Binding Value, ElementName=RadiusSlider, StringFormat={}{0:0}}" />
+                                    </Grid>
+
+                                    <Grid Margin="0,3,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="104" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="42" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="Поворот" Style="{StaticResource RowLabel}" />
+                                        <Slider x:Name="RotationSlider" Grid.Column="1"
+                                                Minimum="0" Maximum="360" TickFrequency="1" IsSnapToTickEnabled="True"
+                                                Value="{Binding Rotation, Mode=TwoWay}" />
+                                        <TextBlock Grid.Column="2" Style="{StaticResource ValueText}"
+                                                   Text="{Binding Value, ElementName=RotationSlider, StringFormat={}{0:0}°}" />
+                                    </Grid>
+
+                                    <CheckBox Content="Обводка" IsChecked="{Binding UseOutline, Mode=TwoWay}" Margin="0,12,0,0" />
+
+                                    <Grid Margin="0,4,0,0" Visibility="{Binding UseOutline, Converter={StaticResource BoolToVisibility}}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="104" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="42" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="Толщина обводки" Style="{StaticResource RowLabel}" />
+                                        <Slider x:Name="OutlineSlider" Grid.Column="1"
+                                                Minimum="0" Maximum="5" TickFrequency="0.5" IsSnapToTickEnabled="True"
+                                                Value="{Binding OutlineThickness, Mode=TwoWay}" />
+                                        <TextBlock Grid.Column="2" Style="{StaticResource ValueText}"
+                                                   Text="{Binding Value, ElementName=OutlineSlider, StringFormat={}{0:0.#}}" />
+                                    </Grid>
+
+                                    <Border Height="1" Background="#2B1A42" Margin="0,12,0,10" />
+
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="104" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="42" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="Масштаб" Style="{StaticResource RowLabel}" />
+                                        <Slider x:Name="ScaleSlider" Grid.Column="1"
+                                                Minimum="0.5" Maximum="2" TickFrequency="0.05" IsSnapToTickEnabled="True"
+                                                Value="{Binding Scale, Mode=TwoWay}" />
+                                        <TextBlock Grid.Column="2" Style="{StaticResource ValueText}"
+                                                   Text="{Binding Value, ElementName=ScaleSlider, StringFormat={}{0:P0}}" />
+                                    </Grid>
+
+                                    <Grid Margin="0,3,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="104" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="42" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="Прозрачность" Style="{StaticResource RowLabel}" />
+                                        <Slider x:Name="OpacitySlider" Grid.Column="1"
+                                                Minimum="0.1" Maximum="1" TickFrequency="0.05" IsSnapToTickEnabled="True"
+                                                Value="{Binding Opacity, Mode=TwoWay}" />
+                                        <TextBlock Grid.Column="2" Style="{StaticResource ValueText}"
+                                                   Text="{Binding Value, ElementName=OpacitySlider, StringFormat={}{0:P0}}" />
+                                    </Grid>
+                                </StackPanel>
+                            </ContentControl>
+
+                            <ContentControl Style="{StaticResource Card}">
+                                <StackPanel>
+                                    <TextBlock Text="ЦВЕТА" Style="{StaticResource CardTitle}" />
+                                    <TextBlock Text="Прицел и обводка" Style="{StaticResource CardSubtitle}" />
+
+                                    <TextBlock Text="Основной цвет" Style="{StaticResource MiniLabel}" />
+                                    <Button Style="{StaticResource ColorFieldButton}"
+                                            Tag="main"
+                                            Click="PickColor_Click">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <Border Width="34" Height="34"
+                                                    CornerRadius="9"
+                                                    BorderBrush="#33FFFFFF"
+                                                    BorderThickness="1"
+                                                    Background="{Binding Color, Converter={StaticResource HexToBrush}}">
+                                                <Border.Effect>
+                                                    <DropShadowEffect Color="#B45CFF"
+                                                                      BlurRadius="10"
+                                                                      ShadowDepth="0"
+                                                                      Opacity="0.45"
+                                                                      RenderingBias="Performance" />
+                                                </Border.Effect>
+                                            </Border>
+
+                                            <StackPanel Grid.Column="1" Margin="11,0,8,0" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Color}"
+                                                           FontSize="14"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{StaticResource TextBrush}"
+                                                           Margin="0,1,0,0" />
+                                            </StackPanel>
+
+                                            <Path Grid.Column="2"
+                                                  Data="M 0 0 L 4.5 4.5 L 0 9"
+                                                  Stroke="{StaticResource AccentBrush}"
+                                                  StrokeThickness="1.6"
+                                                  StrokeStartLineCap="Round"
+                                                  StrokeEndLineCap="Round"
+                                                  VerticalAlignment="Center" />
+                                        </Grid>
+                                    </Button>
+
+                                    <TextBlock Text="Обводка" Style="{StaticResource MiniLabel}" Margin="0,12,0,5" />
+                                    <Button Style="{StaticResource ColorFieldButton}"
+                                            Tag="outline"
+                                            Click="PickColor_Click">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <Border Width="34" Height="34"
+                                                    CornerRadius="9"
+                                                    BorderBrush="#33FFFFFF"
+                                                    BorderThickness="1"
+                                                    Background="{Binding OutlineColor, Converter={StaticResource HexToBrush}}">
+                                                <Border.Effect>
+                                                    <DropShadowEffect Color="#B45CFF"
+                                                                      BlurRadius="10"
+                                                                      ShadowDepth="0"
+                                                                      Opacity="0.45"
+                                                                      RenderingBias="Performance" />
+                                                </Border.Effect>
+                                            </Border>
+
+                                            <StackPanel Grid.Column="1" Margin="11,0,8,0" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding OutlineColor}"
+                                                           FontSize="14"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{StaticResource TextBrush}"
+                                                           Margin="0,1,0,0" />
+                                            </StackPanel>
+
+                                            <Path Grid.Column="2"
+                                                  Data="M 0 0 L 4.5 4.5 L 0 9"
+                                                  Stroke="{StaticResource AccentBrush}"
+                                                  StrokeThickness="1.6"
+                                                  StrokeStartLineCap="Round"
+                                                  StrokeEndLineCap="Round"
+                                                  VerticalAlignment="Center" />
+                                        </Grid>
+                                    </Button>
+
+                                </StackPanel>
+                            </ContentControl>
+                        </StackPanel>
+
+                        <!-- Column 3: glow and position -->
+                        <StackPanel Grid.Column="4">
+                            <ContentControl Style="{StaticResource Card}">
+                                <StackPanel>
+                                    <TextBlock Text="СВЕЧЕНИЕ" Style="{StaticResource CardTitle}" />
+                                    <TextBlock Text="Подсветка вокруг прицела" Style="{StaticResource CardSubtitle}" />
+
+                                    <Grid Margin="0,4,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="104" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="42" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="Сила свечения" Style="{StaticResource RowLabel}" />
+                                        <Slider x:Name="GlowSlider" Grid.Column="1"
+                                                Minimum="0" Maximum="20" TickFrequency="0.5" IsSnapToTickEnabled="True"
+                                                Value="{Binding GlowStrength, Mode=TwoWay}" />
+                                        <TextBlock Grid.Column="2" Style="{StaticResource ValueText}"
+                                                   Text="{Binding Value, ElementName=GlowSlider, StringFormat={}{0:0.#}}" />
+                                    </Grid>
+
+                                    <CheckBox Content="Свечение цветом прицела"
+                                              IsChecked="{Binding GlowUsesMainColor, Mode=TwoWay}"
+                                              Margin="0,13,0,0" />
+
+                                    <!-- The custom glow colour is only relevant when it does not follow the main colour -->
+                                    <StackPanel Margin="0,12,0,0">
+                                        <StackPanel.Style>
+                                            <Style TargetType="StackPanel">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding GlowUsesMainColor}" Value="True">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </StackPanel.Style>
+
+                                        <TextBlock Text="Цвет свечения" Style="{StaticResource MiniLabel}" />
+                                        <Button Style="{StaticResource ColorFieldButton}"
+                                                Tag="glow"
+                                                Click="PickColor_Click">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <Border Width="34" Height="34"
+                                                        CornerRadius="9"
+                                                        BorderBrush="#33FFFFFF"
+                                                        BorderThickness="1"
+                                                        Background="{Binding GlowColor, Converter={StaticResource HexToBrush}}">
+                                                    <Border.Effect>
+                                                        <DropShadowEffect Color="#B45CFF"
+                                                                          BlurRadius="10"
+                                                                          ShadowDepth="0"
+                                                                          Opacity="0.45"
+                                                                          RenderingBias="Performance" />
+                                                    </Border.Effect>
+                                                </Border>
+
+                                                <StackPanel Grid.Column="1" Margin="11,0,8,0" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding GlowColor}"
+                                                               FontSize="14"
+                                                               FontWeight="SemiBold"
+                                                               Foreground="{StaticResource TextBrush}"
+                                                               Margin="0,1,0,0" />
+                                                </StackPanel>
+
+                                                <Path Grid.Column="2"
+                                                      Data="M 0 0 L 4.5 4.5 L 0 9"
+                                                      Stroke="{StaticResource AccentBrush}"
+                                                      StrokeThickness="1.6"
+                                                      StrokeStartLineCap="Round"
+                                                      StrokeEndLineCap="Round"
+                                                      VerticalAlignment="Center" />
+                                            </Grid>
+                                        </Button>
+                                    </StackPanel>
+                                </StackPanel>
+                            </ContentControl>
+
+                            <ContentControl Style="{StaticResource Card}">
+                                <StackPanel>
+                                    <Grid>
+                                        <StackPanel>
+                                            <TextBlock Text="ПОЛОЖЕНИЕ" Style="{StaticResource CardTitle}" />
+                                            <TextBlock Text="Смещение от центра монитора" Style="{StaticResource CardSubtitle}" Margin="0,2,0,0" />
+                                        </StackPanel>
+                                        <Button Content="В центр" Style="{StaticResource GhostButton}"
+                                                HorizontalAlignment="Right" VerticalAlignment="Top"
+                                                Padding="9,3" FontSize="11"
+                                                Click="Center_Click" />
+                                    </Grid>
+
+                                    <Grid Margin="0,12,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="104" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="42" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="Смещение X" Style="{StaticResource RowLabel}" />
+                                        <Slider x:Name="OffsetXSlider" Grid.Column="1"
+                                                Minimum="-200" Maximum="200" TickFrequency="1" IsSnapToTickEnabled="True"
+                                                Value="{Binding OffsetX, Mode=TwoWay}" />
+                                        <TextBlock Grid.Column="2" Style="{StaticResource ValueText}"
+                                                   Text="{Binding Value, ElementName=OffsetXSlider, StringFormat={}{0:0}}" />
+                                    </Grid>
+
+                                    <Grid Margin="0,3,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="104" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="42" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="Смещение Y" Style="{StaticResource RowLabel}" />
+                                        <Slider x:Name="OffsetYSlider" Grid.Column="1"
+                                                Minimum="-200" Maximum="200" TickFrequency="1" IsSnapToTickEnabled="True"
+                                                Value="{Binding OffsetY, Mode=TwoWay}" />
+                                        <TextBlock Grid.Column="2" Style="{StaticResource ValueText}"
+                                                   Text="{Binding Value, ElementName=OffsetYSlider, StringFormat={}{0:0}}" />
+                                    </Grid>
+                                </StackPanel>
+                            </ContentControl>
+                        </StackPanel>
+                    </Grid>
+                </ScrollViewer>
+
+                <!-- Footer -->
+                <Border Grid.Row="2"
+                        Background="#0E0718"
+                        BorderBrush="#2A1743"
+                        BorderThickness="0,1,0,0"
+                        CornerRadius="0,0,17,17"
+                        Padding="18,12">
+                    <Grid>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Style="{StaticResource GhostButton}"
+                                    Click="Telegram_Click"
+                                    Margin="0,0,8,0">
+                                <StackPanel Orientation="Horizontal">
+                                    <Path Data="M 1 8.5 L 21 1 L 15 19 L 9.5 13.2 L 6 16.5 L 6.2 11.4 Z"
+                                          Fill="{StaticResource AccentBrush}"
+                                          Width="15"
+                                          Height="15"
+                                          Stretch="Uniform"
+                                          Margin="0,0,7,0"
+                                          VerticalAlignment="Center" />
+                                    <TextBlock Text="Telegram" FontSize="12" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                            <Button Content="Сбросить" Style="{StaticResource GhostButton}" Click="Reset_Click" Margin="0,0,8,0" />
+                            <Button Content="Выход" Style="{StaticResource AccentButton}" Click="Exit_Click" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
