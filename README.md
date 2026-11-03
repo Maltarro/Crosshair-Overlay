@@ -24,7 +24,7 @@ A fast and free alternative to Hudsight and Crosshair X
 
 ## Installation
 
-Choose your preferred version from **[Releases](https://github.com)**:
+Choose your preferred version from **[Releases](https://github.com/Maltarro/Crosshair-Overlay/releases/tag/Release)**:
 
 *   **Portable:** Download the `.zip` archive, unpack it anywhere, and run `CrosshairOverlay.exe`.
 *   **Installer:** Download the `.exe` setup file and follow the installation wizard.
