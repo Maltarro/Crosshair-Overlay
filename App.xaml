@@ -18,9 +18,9 @@
             <SolidColorBrush x:Key="PanelHoverBrush" Color="#33204C" />
 
             <LinearGradientBrush x:Key="WindowGradientBrush" StartPoint="0,0" EndPoint="1,1">
-                <GradientStop Color="#221041" Offset="0" />
-                <GradientStop Color="#150B26" Offset="0.5" />
-                <GradientStop Color="#0B0614" Offset="1" />
+                <GradientStop Color="#1E1E24" Offset="0" />
+                <GradientStop Color="#15151B" Offset="0.5" />
+                <GradientStop Color="#0F0F15" Offset="1" />
             </LinearGradientBrush>
 
             <LinearGradientBrush x:Key="CardGradientBrush" StartPoint="0,0" EndPoint="1,1">
@@ -324,7 +324,7 @@
                 <Setter Property="Background" Value="#140C20" />
                 <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
                 <Setter Property="BorderThickness" Value="1" />
-                <Setter Property="Padding" Value="8" />
+                <Setter Property="Padding" Value="6" />
                 <Setter Property="Cursor" Value="Hand" />
                 <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                 <Setter Property="SnapsToDevicePixels" Value="True" />
@@ -512,7 +512,7 @@
                                                                  To="0.4" Duration="0:0:0.15" />
                                                 <DoubleAnimation Storyboard.TargetName="CheckGlow"
                                                                  Storyboard.TargetProperty="Opacity"
-                                                                 To="0" Duration="0:0.2" />
+                                                                 To="0" Duration="0:0:0.2" />
                                                 <DoubleAnimation Storyboard.TargetName="CheckGlow"
                                                                  Storyboard.TargetProperty="BlurRadius"
                                                                  To="8" Duration="0:0:0.2" />
@@ -527,6 +527,95 @@
                         </ControlTemplate>
                     </Setter.Value>
                 </Setter>
+            </Style>
+
+            <!-- Compact colour swatch used by the quick-pick presets -->
+            <Style x:Key="SwatchButton" TargetType="Button">
+                <Setter Property="Background" Value="#FFFFFF" />
+                <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="Width" Value="22" />
+                <Setter Property="Height" Value="22" />
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="Cursor" Value="Hand" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="SwatchBd"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="7" />
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="SwatchBd" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                                    <Setter TargetName="SwatchBd" Property="BorderThickness" Value="2" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Neon scrollbar built on a real Track so dragging works -->
+            <Style TargetType="ScrollBar">
+                <Setter Property="SnapsToDevicePixels" Value="True" />
+                <Setter Property="Background" Value="#140C20" />
+                <Setter Property="Width" Value="12" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ScrollBar">
+                            <Grid Background="{TemplateBinding Background}">
+                                <Track x:Name="PART_Track" IsDirectionReversed="True">
+                                    <Track.DecreaseRepeatButton>
+                                        <RepeatButton Command="{x:Static ScrollBar.PageUpCommand}" Focusable="False">
+                                            <RepeatButton.Template>
+                                                <ControlTemplate TargetType="RepeatButton">
+                                                    <Border Background="Transparent" />
+                                                </ControlTemplate>
+                                            </RepeatButton.Template>
+                                        </RepeatButton>
+                                    </Track.DecreaseRepeatButton>
+                                    <Track.Thumb>
+                                        <Thumb x:Name="ScrollThumb" Background="{StaticResource AccentBrush}">
+                                            <Thumb.Template>
+                                                <ControlTemplate TargetType="Thumb">
+                                                    <Border Background="{TemplateBinding Background}"
+                                                            CornerRadius="4"
+                                                            Margin="3,2" />
+                                                </ControlTemplate>
+                                            </Thumb.Template>
+                                        </Thumb>
+                                    </Track.Thumb>
+                                    <Track.IncreaseRepeatButton>
+                                        <RepeatButton Command="{x:Static ScrollBar.PageDownCommand}" Focusable="False">
+                                            <RepeatButton.Template>
+                                                <ControlTemplate TargetType="RepeatButton">
+                                                    <Border Background="Transparent" />
+                                                </ControlTemplate>
+                                            </RepeatButton.Template>
+                                        </RepeatButton>
+                                    </Track.IncreaseRepeatButton>
+                                </Track>
+                            </Grid>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="Orientation" Value="Horizontal">
+                                    <Setter TargetName="PART_Track" Property="Orientation" Value="Horizontal" />
+                                    <Setter TargetName="PART_Track" Property="IsDirectionReversed" Value="False" />
+                                </Trigger>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="ScrollThumb" Property="Background" Value="{StaticResource AccentHoverBrush}" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+                <Style.Triggers>
+                    <Trigger Property="Orientation" Value="Horizontal">
+                        <Setter Property="Width" Value="Auto" />
+                        <Setter Property="Height" Value="12" />
+                    </Trigger>
+                </Style.Triggers>
             </Style>
 
             <Style x:Key="SliderTrackButton" TargetType="RepeatButton">
@@ -688,51 +777,65 @@
                                         BorderBrush="{TemplateBinding BorderBrush}"
                                         BorderThickness="{TemplateBinding BorderThickness}"
                                         CornerRadius="7">
-                                    <Border.Effect>
-                                        <DropShadowEffect x:Name="ComboGlow"
-                                                          Color="#B45CFF"
-                                                          BlurRadius="10"
-                                                          ShadowDepth="0"
-                                                          Opacity="0"
-                                                          RenderingBias="Performance" />
-                                    </Border.Effect>
                                     <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <ToggleButton Grid.Column="0"
-                                                  Focusable="False"
-                                                  ClickMode="Press"
-                                                  Background="Transparent"
-                                                  IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                                        <ContentPresenter Margin="10,0,32,0"
+                                                          HorizontalAlignment="Left"
+                                                          VerticalAlignment="Center"
+                                                          Content="{TemplateBinding SelectionBoxItem}"
+                                                          ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                                          ContentStringFormat="{TemplateBinding SelectionBoxItemStringFormat}"
+                                                          IsHitTestVisible="False" />
+                                        <Path Data="M 0 0 L 4 4 L 8 0"
+                                              Stroke="{StaticResource MutedBrush}"
+                                              StrokeThickness="1.5"
+                                              HorizontalAlignment="Right"
+                                              VerticalAlignment="Center"
+                                              Margin="0,0,12,0"
+                                              IsHitTestVisible="False" />
+                                        <ToggleButton Focusable="False"
+                                                      ClickMode="Press"
+                                                      Background="Transparent"
+                                                      IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
                                             <ToggleButton.Template>
                                                 <ControlTemplate TargetType="ToggleButton">
                                                     <Border Background="Transparent" />
                                                 </ControlTemplate>
                                             </ToggleButton.Template>
                                         </ToggleButton>
-                                        <TextBlock Grid.Column="0"
-                                               Text="{Binding SelectionBoxItem, RelativeSource={RelativeSource TemplatedParent}}"
-                                               Margin="10,0,30,0"
-                                               HorizontalAlignment="Stretch"
-                                               VerticalAlignment="Center"
-                                               Foreground="{TemplateBinding Foreground}"
-                                               FontSize="{TemplateBinding FontSize}"
-                                               TextTrimming="CharacterEllipsis"
-                                               IsHitTestVisible="False" />
-                                        <Path Grid.Column="1"
-                                              Data="M 0 0 L 4 4 L 8 0"
-                                              Stroke="{StaticResource MutedBrush}"
-                                              StrokeThickness="1.5"
-                                              HorizontalAlignment="Right"
-                                              VerticalAlignment="Center"
-                                              Margin="0,0,12,0"
-                                              IsHitTestVisible="False"
-                                              RenderTransformOrigin="0.5,0.5" />
                                     </Grid>
                                 </Border>
+                                <Popup x:Name="PART_Popup"
+                                       AllowsTransparency="True"
+                                       Placement="Bottom"
+                                       VerticalOffset="3"
+                                       IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}}"
+                                       PopupAnimation="Fade"
+                                       Focusable="False">
+                                    <Border Background="#1A1028"
+                                            BorderBrush="{StaticResource BorderBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="7"
+                                            MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}"
+                                            MaxHeight="260">
+                                        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                                      HorizontalScrollBarVisibility="Disabled"
+                                                      Padding="4">
+                                            <ItemsPresenter />
+                                        </ScrollViewer>
+                                    </Border>
+                                </Popup>
                             </Grid>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Chrome" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                                </Trigger>
+                                <Trigger Property="IsDropDownOpen" Value="True">
+                                    <Setter TargetName="Chrome" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Opacity" Value="0.5" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
                         </ControlTemplate>
                     </Setter.Value>
                 </Setter>

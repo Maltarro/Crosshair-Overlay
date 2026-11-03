@@ -15,11 +15,12 @@ namespace CrosshairOverlay;
 
 public partial class MainWindow : Window
 {
-    private const double PreferredHeight = 700;
     private const double ScreenMargin = 16;
 
     private readonly AppSettings _settings;
     private bool _allowClose;
+    private double _workTop;
+    private double _workHeight = SystemParameters.WorkArea.Height;
 
     public MainWindow(AppSettings settings)
     {
@@ -55,6 +56,7 @@ public partial class MainWindow : Window
         PositionOnMonitor(GetTargetMonitor());
 
         IsVisibleChanged += OnIsVisibleChanged;
+        SizeChanged += OnWindowSizeChanged;
     }
 
     /// <summary>
@@ -202,7 +204,10 @@ public partial class MainWindow : Window
 
         if (work is null)
         {
-            MaxHeight = Math.Max(MinHeight, SystemParameters.WorkArea.Height - 24);
+            _workTop = SystemParameters.WorkArea.Top / scale;
+            _workHeight = SystemParameters.WorkArea.Height / scale;
+            MaxHeight = Math.Max(MinHeight, _workHeight - 24);
+            ApplyVerticalPosition();
             return;
         }
 
@@ -210,12 +215,28 @@ public partial class MainWindow : Window
         var workLeft = work.Value.X / scale;
         var workTop = work.Value.Y / scale;
 
+        _workTop = workTop;
+        _workHeight = workHeight;
         MaxHeight = Math.Max(MinHeight, workHeight - 24);
-        var height = Math.Min(PreferredHeight, MaxHeight);
-        Height = height;
-
         Left = Math.Round(workLeft + ScreenMargin);
-        Top = Math.Round(workTop + Math.Max(0, (workHeight - height) / 2.0));
+        ApplyVerticalPosition();
+    }
+
+    /// <summary>
+    /// Keeps the auto-sized window centred after its content changes height.
+    /// </summary>
+    private void ApplyVerticalPosition()
+    {
+        var height = ActualHeight > 0 ? ActualHeight : MinHeight;
+        Top = Math.Round(_workTop + Math.Max(0, (_workHeight - height) / 2.0));
+    }
+
+    private void OnWindowSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        if (WindowState == WindowState.Normal)
+        {
+            ApplyVerticalPosition();
+        }
     }
 
     /// <summary>Lets the app close the window during shutdown instead of hiding it.</summary>

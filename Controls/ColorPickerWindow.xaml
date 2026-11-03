@@ -208,6 +208,7 @@
                             Background="{StaticResource HueBrush}">
                         <Canvas x:Name="HueArea"
                                 Height="16"
+                                Background="Transparent"
                                 Cursor="Hand"
                                 MouseLeftButtonDown="HueArea_MouseLeftButtonDown"
                                 MouseMove="HueArea_MouseMove"

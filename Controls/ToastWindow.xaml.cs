@@ -138,10 +138,15 @@ public partial class ToastWindow : Window
     private void OnCloseClick(object sender, RoutedEventArgs e)
     {
         e.Handled = true;
-        Dismiss();
+        Dismiss(animate: false);
     }
 
     public void Dismiss()
+    {
+        Dismiss(animate: true);
+    }
+
+    public void Dismiss(bool animate)
     {
         if (_dismissing)
         {
@@ -152,7 +157,7 @@ public partial class ToastWindow : Window
         _ticker.Stop();
         _clock.Stop();
 
-        if (!_started)
+        if (!animate || !_started)
         {
             Close();
             return;

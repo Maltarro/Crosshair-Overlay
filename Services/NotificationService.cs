@@ -11,8 +11,8 @@ namespace CrosshairOverlay.Services;
 /// </summary>
 public sealed class NotificationService : IDisposable
 {
-    private const double ScreenMargin = 18;
-    private const double ToastGap = 10;
+    private const double ScreenMargin = 14;
+    private const double ToastGap = 3;
     private const int MaxToasts = 4;
 
     private readonly List<ToastWindow> _toasts = new();
@@ -91,31 +91,37 @@ public sealed class NotificationService : IDisposable
 
     private static void MoveTo(ToastWindow toast, double targetTop, bool immediate)
     {
+        if (immediate || !toast.IsVisible)
+        {
+            toast.BeginAnimation(Window.TopProperty, null);
+            toast.Top = targetTop;
+            return;
+        }
+
         var currentTop = toast.Top;
 
-        // Clear a running move so that the base value can be updated.
-        toast.BeginAnimation(Window.TopProperty, null);
-
-        if (immediate || !toast.IsVisible || Math.Abs(currentTop - targetTop) < 0.5)
+        if (Math.Abs(currentTop - targetTop) < 0.5)
         {
-            toast.Top = targetTop;
             return;
         }
 
         var ease = new SineEase { EasingMode = EasingMode.EaseInOut };
         ease.Freeze();
 
-        toast.Top = targetTop;
+        var animation = new DoubleAnimation(currentTop, targetTop, TimeSpan.FromMilliseconds(260))
+        {
+            EasingFunction = ease,
+            FillBehavior = FillBehavior.HoldEnd
+        };
+        animation.Completed += (_, _) =>
+        {
+            // Commit the final position as the base value so clearing the
+            // animation later can never move the window back to a stale spot.
+            toast.BeginAnimation(Window.TopProperty, null);
+            toast.Top = targetTop;
+        };
 
-        // Existing toasts glide to their new slot instead of jumping when
-        // another notification appears or disappears.
-        toast.BeginAnimation(
-            Window.TopProperty,
-            new DoubleAnimation(currentTop, targetTop, TimeSpan.FromMilliseconds(300))
-            {
-                EasingFunction = ease,
-                FillBehavior = FillBehavior.Stop
-            });
+        toast.BeginAnimation(Window.TopProperty, animation);
     }
 
     public void Dispose()

@@ -109,6 +109,14 @@ public partial class App : System.Windows.Application
         UpdateOverlayVisibility();
         _visibilityTimer.Start();
         _notificationsReady = true;
+
+        if (_settings is not null)
+        {
+            _notifications?.Show(
+                "Приложение запущено",
+                $"{_settings.ToggleHotkey} - прицел, {_settings.SettingsHotkey} - настройки.",
+                NotificationKind.Info);
+        }
     }
 
     public void ShowSettingsWindow()
