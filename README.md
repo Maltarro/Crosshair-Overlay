@@ -14,9 +14,9 @@ A fast and free alternative to Hudsight and Crosshair X
 
 ## Features
 
-- - 🎨 **Advanced Color Picker** — Choose colors using an interactive HSV palette, adjustment sliders, or raw HEX/RGB values
-- - 🖥️ **Smart Fullscreen Mode** — Auto-hides when you Alt-Tab and shows up only when the game is active
-- - ⚡ **Zero-Impact Performance** — Native C# architecture with 0% FPS drop, in-game hotkeys (F8/F9), and tray minimization
+- 🎨 **Advanced Color Picker** — Choose colors using an interactive HSV palette, adjustment sliders, or raw HEX/RGB values
+- 🖥️ **Smart Fullscreen Mode** — Auto-hides when you Alt-Tab and shows up only when the game is active
+- ⚡ **Zero-Impact Performance** — Native C# architecture with 0% FPS drop, in-game hotkeys (F8/F9), and tray minimization
 
 ## Screenshots
 
